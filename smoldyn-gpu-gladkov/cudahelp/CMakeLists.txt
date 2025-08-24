@@ -45,8 +45,6 @@ CUDA_ADD_EXECUTABLE(exp
     devmanager.cpp
     benchmark.cpp
 )
-TARGET_LINK_LIBRARIES(exp
-)
 
 # Or compile the cuda code into a shared library.
 

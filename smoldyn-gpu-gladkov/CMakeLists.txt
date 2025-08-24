@@ -1,73 +1,36 @@
+cmake_minimum_required(VERSION 3.18) # need >= 3.18 for CUDA_ARCHITECTURES
+project(SmolGPU LANGUAGES C CXX CUDA)
 
-##############################################################################
-# There are two ways to add include directories to the NVCC command
-# line:
-cmake_minimum_required(VERSION 2.8)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-project(SmolGPU)
-#set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
-FIND_PACKAGE(CUDA 3.0 REQUIRED)
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLEW REQUIRED)
-FIND_PACKAGE(GLUT REQUIRED)
-FIND_PACKAGE(ZLIB REQUIRED)
-FIND_PACKAGE(PNG REQUIRED)
+# Find required packages
+find_package(CUDAToolkit REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(PNG REQUIRED)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-    FIND_PACKAGE(Boost REQUIRED)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    ADD_DEFINITIONS("-DHAS_BOOST")
+    find_package(Boost REQUIRED)
+    include_directories(${Boost_INCLUDE_DIR})
+    add_definitions("-DHAS_BOOST")
 endif()
 
-
-MESSAGE("${GLUT_LIBRARY}")
-MESSAGE("${ZLIB_LIBRARIES}")
-MESSAGE("${PNG_LIBRARIES}")
-#link_directories(${GLUT_LIBRARY_DIRS})
-
-INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH}
+include_directories(
+    ${GLEW_INCLUDE_DIRS}
     ${GLUT_INCLUDE_PATH}
     ${PNG_PNG_INCLUDE_DIR}
 )
-#FIND_PACKAGE(CUDA QUIET REQUIRED)
-# The cuda_include_directories adds paths to only cuda compilation.
-CUDA_INCLUDE_DIRECTORIES(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
 
+# Auto-select CUDA architecture (sm_89 for RTX 4060, but extendable)
+# You can hardcode "89" if you only care about your machine
+set(CMAKE_CUDA_ARCHITECTURES 89 CACHE STRING "CUDA architectures")
 
-
-# The include_directories adds paths to both C/C++ compilation in the native
-# compiler and cuda compilation in NVCC.  Note that CUDA_INCLUDE_DIRS is added
-# automatically by CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
-
-# INCLUDE_DIRECTORIES(
-#  /home/denis/Projects/GasDSMC/include
-# )
-
-##############################################################################
-# There are four ways to compile source files with NVCC. 
-
-# Set CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE when you want to add the same .cu
-# file to multiple targets.
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_89)
-#set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
-#set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -g -G)
-
-#set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++0x)
-
-#enable this for realase
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O3)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O3)
-
-
-#set(CUDA_BUILD_EMULATION off)
-
-# Use one executable only.
-CUDA_ADD_EXECUTABLE(SmoldynGPU
+add_executable(SmoldynGPU
     smoldyn.cpp
     sim_settings.cpp
     draw_helper.cpp
@@ -98,25 +61,27 @@ CUDA_ADD_EXECUTABLE(SmoldynGPU
     cudahelp/random/seedgen.cpp
 )
 
-# add_library(${ZLIB_LIBRARIES} STATIC IMPORTED)
-# add_library(${PNG_LIBRARIES} STATIC IMPORTED)
+# Set build type to Debug if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+endif()
 
-TARGET_LINK_LIBRARIES(SmoldynGPU
+# Compiler flags for CUDA and C++
+target_compile_options(SmoldynGPU PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:$<IF:$<CONFIG:Debug>,-g -G -O0,-O3>>
+    $<$<COMPILE_LANGUAGE:CXX>:$<IF:$<CONFIG:Debug>,-g -O0,-O3>>
+)
+
+# Link libraries
+target_link_libraries(SmoldynGPU
+    CUDA::cudart
     ${OPENGL_LIBRARIES}
     ${GLU_LIBRARY}
     ${GLUT_LIBRARY}
-    ${GLEW_LIBRARY}
+    ${GLEW_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${PNG_LIBRARIES}
-    -lGLU
 )
 
-# Or compile the cuda code into a shared library.
-
-# Anything other than -D or /D is not passed along to nvcc.
-add_definitions(-DMULTIPLIER=2)
-
+# Copy resource files (example: sprite2.png)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/sprite2.png DESTINATION ${CMAKE_BINARY_DIR})
-
-CUDA_BUILD_CLEAN_TARGET()
-

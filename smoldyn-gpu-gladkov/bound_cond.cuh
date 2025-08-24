@@ -8,6 +8,7 @@
 #ifndef BOUND_COND_CUH_
 #define BOUND_COND_CUH_
 
+#include "config.h"
 #include "molecules_type.h"
 
 using namespace smolgpu;

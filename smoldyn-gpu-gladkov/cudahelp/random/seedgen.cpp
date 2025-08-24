@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "../../config.h"
+
 #ifndef _MSC_VER
 
 #include <fcntl.h>

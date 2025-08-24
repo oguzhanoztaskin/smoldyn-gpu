@@ -141,7 +141,7 @@ public:
 // FUNCTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void echo(istringstream& ss, smolparams_t& p) { std::cout << ss; }
+void echo(istringstream& ss, smolparams_t& p) { std::cout << ss.str(); }
 
 void passthru(istringstream& ss, smolparams_t& p) {}
 

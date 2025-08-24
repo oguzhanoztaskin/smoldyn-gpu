@@ -5,6 +5,7 @@
  *      Author: denis
  */
 
+#include <GL/glew.h>
 #include <cuda_gl_interop.h>
 
 #include "color_map.h"

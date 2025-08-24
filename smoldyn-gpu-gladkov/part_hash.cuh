@@ -8,6 +8,7 @@
 #ifndef PART_HASH_CUH_
 #define PART_HASH_CUH_
 
+#include "thrust/device_ptr.h"
 #include "thrust/scan.h"
 
 namespace cudahelp {
