@@ -30,7 +30,7 @@ CUDA_INCLUDE_DIRECTORIES(
 
 # Set CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE when you want to add the same .cu
 # file to multiple targets.
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_89)
 #set(CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE OFF)
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -g -G)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++0x)

@@ -60,7 +60,7 @@ void computeNumCTAs(KernelPointer kernel, int smemDynamicBytes,
   unsigned int maxThreadsPerSM = 768;
   unsigned int regAllocationUnit = 256;   // in registers
   unsigned int smemAllocationUnit = 512;  // in bytes
-  bool blockRegisterAllocation = true;    // otherwise warp granularity (sm_20)
+  bool blockRegisterAllocation = true;    // otherwise warp granularity (sm_89)
 
   if (smVersion >= 20) {
     maxThreadsPerSM = 1536;
