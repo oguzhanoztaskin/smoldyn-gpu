@@ -35,24 +35,8 @@
 namespace nvRadixSort {
 
 class RadixSort {
- private:                       // member variables
-  unsigned int *mTempKeys;      // Temporary key storage
-  unsigned int *mTempValues;    // Temporary value storage
-  unsigned int *mCounters;      // Histogram counters
-  unsigned int *mCountersSum;   // Prefix sum of counters
-  unsigned int *mBlockOffsets;  // Block offset storage
-  void *mScanPlan;              // Scan plan for prefix sums
-  unsigned int mMaxElements;    // Maximum number of elements
-  bool mKeysOnly;               // Keys-only mode flag
-  bool mInitialized;            // Initialization flag
-
- public:  // methods
-  RadixSort(unsigned int maxElements, bool keysOnly = false);
-
-  //------------------------------------------------------------------------
-  // Destructor
-  //------------------------------------------------------------------------
-  ~RadixSort();
+ public:
+  RadixSort(int _unused);
 
   //------------------------------------------------------------------------
   // Sorts input arrays of unsigned integer keys and (optional) values
@@ -68,25 +52,9 @@ class RadixSort {
 
  private:  // helper methods
   void radixSort(unsigned int *keys, unsigned int *values,
-                 unsigned int *tempKeys, unsigned int *tempValues,
-                 unsigned int *counters, unsigned int *countersSum,
-                 unsigned int *blockOffsets, void *scanPlan,
-                 unsigned int numElements, unsigned int keyBits, bool flipBits);
+                 unsigned int numElements);
 
-  void radixSortKeysOnly(unsigned int *keys, unsigned int *tempKeys,
-                         unsigned int *counters, unsigned int *countersSum,
-                         unsigned int *blockOffsets, void *scanPlan,
-                         unsigned int numElements, unsigned int keyBits,
-                         bool flipBits);
-
-  void initialize();
-  void cleanup();
-
- public:                                     // constants
-  static const unsigned int CTA_SIZE = 256;  // Number of threads per block
-  static const unsigned int WARP_SIZE = 32;
-  static const unsigned int RADIX_BITS = 4;   // Process 4 bits per pass
-  static const unsigned int RADIX_SIZE = 16;  // 2^4 = 16 bins
+  void radixSortKeysOnly(unsigned int *keys, unsigned int numElements);
 };
 
 }  // namespace nvRadixSort
