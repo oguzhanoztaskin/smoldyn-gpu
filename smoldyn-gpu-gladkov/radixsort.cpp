@@ -25,7 +25,7 @@ namespace nvRadixSort {
 
 // Used for creating a mapping of kernel functions to the number of
 // CTAs to launch for each
-typedef void* KernelPointer;
+typedef void *KernelPointer;
 std::map<KernelPointer, int> numCTAsTable;
 
 int getNumCTAs(KernelPointer kernel) { return numCTAsTable[kernel]; }
@@ -73,7 +73,7 @@ void computeNumCTAs(KernelPointer kernel, int smemDynamicBytes,
   }
 
   cudaFuncAttributes attr;
-  err = cudaFuncGetAttributes(&attr, (const char*)kernel);
+  err = cudaFuncGetAttributes(&attr, (const char *)kernel);
   assert(err == cudaSuccess);
 
   // Number of warps (round up to nearest whole multiple of warp size)
@@ -114,5 +114,69 @@ void computeNumCTAs(KernelPointer kernel, int smemDynamicBytes,
                            std::min<size_t>(ctaLimitThreads, maxBlocksPerSM)));
   setNumCTAs(kernel, maxCTAs);
 }
+
+// RadixSort class implementation
+
+RadixSort::RadixSort(unsigned int maxElements, bool keysOnly)
+    : mMaxElements(maxElements),
+      mKeysOnly(keysOnly),
+      mInitialized(false),
+      mTempKeys(nullptr),
+      mTempValues(nullptr),
+      mCounters(nullptr),
+      mCountersSum(nullptr),
+      mBlockOffsets(nullptr),
+      mScanPlan(nullptr) {
+  initialize();
+}
+
+RadixSort::~RadixSort() { cleanup(); }
+
+void RadixSort::initialize() {
+  if (mInitialized) return;
+
+  // For the simple Thrust-based implementation, we only need minimal temporary
+  // storage The actual sorting is done in-place by Thrust
+  mInitialized = true;
+}
+
+void RadixSort::cleanup() {
+  if (!mInitialized) return;
+
+  // Free any allocated memory if needed
+  mInitialized = false;
+}
+
+void RadixSort::sort(unsigned int *keys, unsigned int *values,
+                     unsigned int numElements, unsigned int keyBits) {
+  if (!mInitialized) {
+    initialize();
+  }
+
+  if (values == nullptr) {
+    radixSortKeysOnly(keys, mTempKeys, mCounters, mCountersSum, mBlockOffsets,
+                      mScanPlan, numElements, keyBits, false);
+  } else {
+    radixSort(keys, values, mTempKeys, mTempValues, mCounters, mCountersSum,
+              mBlockOffsets, mScanPlan, numElements, keyBits, false);
+  }
+}
+
+// Forward declarations
+namespace nvRadixSort {
+void radixSortKeysOnlyImpl(unsigned int *keys, unsigned int *tempKeys,
+                           unsigned int *counters, unsigned int *countersSum,
+                           unsigned int *blockOffsets, void *scanPlan,
+                           unsigned int numElements, unsigned int keyBits,
+                           bool flipBits);
+void radixSortImpl(unsigned int *keys, unsigned int *values,
+                   unsigned int *tempKeys, unsigned int *tempValues,
+                   unsigned int *counters, unsigned int *countersSum,
+                   unsigned int *blockOffsets, void *scanPlan,
+                   unsigned int numElements, unsigned int keyBits,
+                   bool flipBits);
+}  // namespace nvRadixSort
+
+// Note: Implementation is in radixsort.cu due to CUDA/Thrust requirements
 
 }  // namespace nvRadixSort
