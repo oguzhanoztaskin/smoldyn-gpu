@@ -12,7 +12,6 @@ that are
 * [CUDA][2]
 * [GLEW][3]
 * [freeGLUT][4] (or [GLUT][5], not recommended)
-* [CUDPP][6], needs building
 * [ZLIB][7],  needs building in Windows
 * [PNG][8], nees building in Windows
 
@@ -31,6 +30,5 @@ One working example is provided, that is "eqil.txt". Pass configuration name as 
 [3]: http://glew.sourceforge.net/
 [4]: http://freeglut.sourceforge.net/
 [5]: http://www.opengl.org/resources/libraries/glut/
-[6]: http://code.google.com/p/cudpp/downloads/list
 [7]: http://www.zlib.net
 [8]: http://libpng.sourceforge.net/index.html

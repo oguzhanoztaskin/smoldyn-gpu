@@ -39,8 +39,6 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O3)
 
 set(CUDA_BUILD_EMULATION off)
 
-LINK_DIRECTORIES(${LINK_DIRECTORIES} ./cudpp/)
-
 # Use one executable only.
 CUDA_ADD_EXECUTABLE(exp
     main.cpp
