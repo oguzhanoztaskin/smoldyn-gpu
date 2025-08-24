@@ -1,0 +1,36 @@
+Smoldyn GPU
+==================
+
+Use [CMake][1] to build the project.
+
+Dependency
+------------
+
+The project depends on several third-party libraries, 
+that are
+
+* [CUDA][2]
+* [GLEW][3]
+* [freeGLUT][4] (or [GLUT][5], not recommended)
+* [CUDPP][6], needs building
+* [ZLIB][7],  needs building in Windows
+* [PNG][8], nees building in Windows
+
+Input file firmat 
+---------
+
+Original Smoldyn file format is used for setting all aspects but geometry
+
+Running 
+---------
+
+One working example is provided, that is "eqil.txt". Pass configuration name as a first command line argument, e.g. "SmoldynGPU.exe equil.txt". XML configuration files are provided but look not working. Likely some changes in format were made after they had been created.
+
+[1]: http://www.cmake.org/
+[2]: https://developer.nvidia.com/cuda-downloads
+[3]: http://glew.sourceforge.net/
+[4]: http://freeglut.sourceforge.net/
+[5]: http://www.opengl.org/resources/libraries/glut/
+[6]: http://code.google.com/p/cudpp/downloads/list
+[7]: http://www.zlib.net
+[8]: http://libpng.sourceforge.net/index.html
