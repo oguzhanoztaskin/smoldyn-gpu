@@ -8,57 +8,53 @@
 #ifndef GPU_DSMC_H_
 #define GPU_DSMC_H_
 
+#include "color_map.h"
 #include "dsmc_base.h"
 #include "particles.h"
 
-#include "color_map.h"
+namespace dsmc {
 
-namespace	dsmc
-{
+template <class DataStrategy>
+class GPUDSMCSolver : public DSMCSolver {
+ public:
+  GPUDSMCSolver();
+  ~GPUDSMCSolver();
 
-	template	<class	DataStrategy>
-	class	GPUDSMCSolver: public	DSMCSolver
-	{
-	public:
-		GPUDSMCSolver();
-		~GPUDSMCSolver();
+ protected:
+  void RunSimulationStep(float dt);
+  void RunBenchmarkSimulationStep(float dt);
 
-	protected:
+  void Render();
+  void InitData();
 
-		void	RunSimulationStep(float dt);
-		void	RunBenchmarkSimulationStep(float dt);
+  statistics_t* SampleStatistics(float4& collStat);
 
-		void	Render();
-		void	InitData();
+  uint InitSystemState(const float3& streamVel);
 
-		statistics_t*	SampleStatistics(float4& collStat);
+  void ReorderParticles(float4* pos, float4* vel, float3* col, float4* old_pos,
+                        float4* old_vel, float3* old_col);
 
-		uint	InitSystemState(const float3& streamVel);
+  void UpdateSortedGrid(float4* pos);
 
-		void	ReorderParticles(float4* pos, float4* vel, float3* col,
-								float4*	old_pos, float4* old_vel, float3* old_col);
+  void InitRegularGrid(reg_grid_t& grid, const float* v, uint size);
 
-		void	UpdateSortedGrid(float4* pos);
+  void RenderConcMap(uint x, uint y, uint w, uint h);
 
-		void	InitRegularGrid(reg_grid_t& grid, const float* v, uint size);
+  unsigned char* GetColorMap(uint& w, uint& h, uint& bpp);
 
-		void	RenderConcMap(uint	x, uint	y, uint	w, uint	h);
+  float3* GetVelocityField();
 
-		unsigned char*	GetColorMap(uint& w, uint& h, uint&	bpp);
+  DataStrategy particles;
 
-		float3*	GetVelocityField();
+  ColorMap<gpu_data_provider_t> colorMap;
 
-		DataStrategy	particles;
-
-		ColorMap<gpu_data_provider_t>	colorMap;
-
-		float*	concentration;
-		uint*	gridHashes;
-		uint*	cellGridIndices;
-		uint2*	cellStartEnd;
-		uint*	geomHashes;
-	};
-}
+  float* concentration;
+  uint* gridHashes;
+  uint* cellGridIndices;
+  uint2* cellStartEnd;
+  uint* geomHashes;
+};
+}  // namespace dsmc
 
 #include "gpu_dsmc.inl"
 

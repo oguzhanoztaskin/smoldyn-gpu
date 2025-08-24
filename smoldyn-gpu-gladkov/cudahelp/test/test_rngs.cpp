@@ -1,93 +1,89 @@
 #include "test_rngs.h"
 
-#include "../random/mtwister.h"
-#include "../random/rndfast.h"
-
 #include <iostream>
 
-#include "../devmanager.h"
 #include "../benchmark.h"
-
+#include "../devmanager.h"
+#include "../random/mtwister.h"
+#include "../random/rndfast.h"
 #include "kernels.h"
 
 using namespace std;
 
-using namespace	cudahelp;
+using namespace cudahelp;
 
-void	test_rngs_gpu()
-{
-	std::cout<<"Testing Mersenne Twister RNG\n";
+void test_rngs_gpu() {
+  std::cout << "Testing Mersenne Twister RNG\n";
 
-	DeviceManager::DevicePtr	dev = DeviceManager::Get().GetMaxGFpsDevice();
-	dev->SetCurrent();
+  DeviceManager::DevicePtr dev = DeviceManager::Get().GetMaxGFpsDevice();
+  dev->SetCurrent();
 
-	const int	rngsCount = 65536;
-	const	int	numSamples = 0x10000000>>3;
+  const int rngsCount = 65536;
+  const int numSamples = 0x10000000 >> 3;
 
-	int*	data = 0;
+  int* data = 0;
 
-	if(!rand::InitGPUTwisters("data/MersenneTwister.dat",rngsCount,999))
-	{
-		std::cout<<"Can't init twisters\n";
-		return;
-	}
+  if (!rand::InitGPUTwisters("data/MersenneTwister.dat", rngsCount, 999)) {
+    std::cout << "Can't init twisters\n";
+    return;
+  }
 
-	cudaMalloc(&data, numSamples*sizeof(int));
+  cudaMalloc(&data, numSamples * sizeof(int));
 
-	std::cout<<"Testing	"<<numSamples<<" samples\n";
+  std::cout << "Testing	" << numSamples << " samples\n";
 
-	CudaBenchmark	bench;
+  CudaBenchmark bench;
 
-	bench.Start("RandGen");
+  bench.Start("RandGen");
 
-	TestMersenneTwisterClass(data, numSamples, rngsCount);
+  TestMersenneTwisterClass(data, numSamples, rngsCount);
 
-	bench.Stop("RandGen");
+  bench.Stop("RandGen");
 
-	std::cout<<numSamples<<" generated in "<<bench.GetValue("RandGen")<<" ms\n";
+  std::cout << numSamples << " generated in " << bench.GetValue("RandGen")
+            << " ms\n";
 
-	cudaFree(data);
+  cudaFree(data);
 
-	rand::DeinitGPUTwisters();
-	
-	cudaThreadExit();
+  rand::DeinitGPUTwisters();
+
+  cudaThreadExit();
 }
 
-void	test_fast_rngs_gpu()
-{
-	std::cout<<"Testing Fast RNGs\n";
+void test_fast_rngs_gpu() {
+  std::cout << "Testing Fast RNGs\n";
 
-	DeviceManager::DevicePtr	dev = DeviceManager::Get().GetMaxGFpsDevice();
-	dev->SetCurrent();
+  DeviceManager::DevicePtr dev = DeviceManager::Get().GetMaxGFpsDevice();
+  dev->SetCurrent();
 
-	const int	rngsCount = 65536;
-	const	int	numSamples = 0x10000000>>3;
+  const int rngsCount = 65536;
+  const int numSamples = 0x10000000 >> 3;
 
-	int*	data = 0;
+  int* data = 0;
 
-	if(!rand::InitFastRngs(rngsCount))
-	{
-		std::cout<<"Can't init RNGs\n";
-		return;
-	}
+  if (!rand::InitFastRngs(rngsCount)) {
+    std::cout << "Can't init RNGs\n";
+    return;
+  }
 
-	cudaMalloc(&data, numSamples*sizeof(int));
+  cudaMalloc(&data, numSamples * sizeof(int));
 
-	std::cout<<"Testing	"<<numSamples<<" samples\n";
+  std::cout << "Testing	" << numSamples << " samples\n";
 
-	CudaBenchmark	bench;
+  CudaBenchmark bench;
 
-	bench.Start("FastRandGen");
+  bench.Start("FastRandGen");
 
-	TestFastRngs(data, numSamples, rngsCount);
+  TestFastRngs(data, numSamples, rngsCount);
 
-	bench.Stop("FastRandGen");
+  bench.Stop("FastRandGen");
 
-	std::cout<<numSamples<<" generated in "<<bench.GetValue("FastRandGen")<<" ms\n";
+  std::cout << numSamples << " generated in " << bench.GetValue("FastRandGen")
+            << " ms\n";
 
-	cudaFree(data);
+  cudaFree(data);
 
-	rand::DeinitFastRngs();
+  rand::DeinitFastRngs();
 
-	cudaThreadExit();
+  cudaThreadExit();
 }

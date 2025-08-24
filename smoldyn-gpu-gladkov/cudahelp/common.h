@@ -1,11 +1,10 @@
-#ifndef	UTILS_H
-#define	UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
-namespace	cudahelp
-{
-	int	GetNumberOfBlocks(int	numThreads, int	numSamples);
-	bool	CheckCUDAError(const char *msg);
-	void	CheckCUDAErrorAndThrow(const char *msg);
-}
+namespace cudahelp {
+int GetNumberOfBlocks(int numThreads, int numSamples);
+bool CheckCUDAError(const char *msg);
+void CheckCUDAErrorAndThrow(const char *msg);
+}  // namespace cudahelp
 
 #endif

@@ -1,4 +1,4 @@
- /* dci.h */
+/* dci.h */
 
 /* Copyright (C) 2001-2006 Makoto Matsumoto and Takuji Nishimura.  */
 /* This library is free software; you can redistribute it and/or   */
@@ -12,13 +12,8 @@
 /* See the GNU Library General Public License for more details.    */
 /* You should have received a copy of the GNU Library General      */
 /* Public License along with this library; if not, write to the    */
-/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */ 
+/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */
 /* 02111-1307  USA                                                 */
-
-
-
-
-
 
 #ifndef DC_IMPLEMENT
 #define DC_IMPLEMENT
@@ -27,26 +22,27 @@ typedef unsigned int uint32_t;
 #define UINT32_C(a) ((uint32_t)a)
 
 typedef struct {
-    uint32_t aaa;
-    int mm,nn,rr,ww;
-    uint32_t wmask,umask,lmask;
-    int shift0, shift1, shiftB, shiftC;
-    uint32_t maskB, maskC;
-    int i;
-    uint32_t *state;
-}mt_struct;
-
+  uint32_t aaa;
+  int mm, nn, rr, ww;
+  uint32_t wmask, umask, lmask;
+  int shift0, shift1, shiftB, shiftC;
+  uint32_t maskB, maskC;
+  int i;
+  uint32_t *state;
+} mt_struct;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Prototypes for original Matsumoto & Nishimura code
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__cplusplus)
-extern "C" 
+extern "C"
 #endif
-void sgenrand_mt(uint32_t seed, mt_struct *mts);
+    void
+    sgenrand_mt(uint32_t seed, mt_struct *mts);
 #if defined(__cplusplus)
-extern "C" 
+extern "C"
 #endif
-uint32_t genrand_mt(mt_struct *mts);
+    uint32_t
+    genrand_mt(mt_struct *mts);
 
 #endif

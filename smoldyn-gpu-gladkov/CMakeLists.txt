@@ -17,29 +17,29 @@ FIND_PACKAGE(ZLIB REQUIRED)
 FIND_PACKAGE(PNG REQUIRED)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-  FIND_PACKAGE(Boost REQUIRED)
-  INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
-  ADD_DEFINITIONS( "-DHAS_BOOST" )
+    FIND_PACKAGE(Boost REQUIRED)
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+    ADD_DEFINITIONS("-DHAS_BOOST")
 endif()
 
 
 #set(CUDPP_INCLUDE_PATH "default value" CACHE PATH "path to CUDPP include directory")
 #FIND_PACKAGE_HANDLE_STANDARD_ARGS(CUDPP DEFAULT_MSG ${CUDPP_INCLUDE_PATH})
-if (NOT DEFINED CUDPP_INCLUDE_PATH )
-	MESSAGE(FATAL_ERROR "Please define the path for CUDPP inlcude directory in CUDPP_INCLUDE_PATH variable")
-endif (NOT DEFINED CUDPP_INCLUDE_PATH )
+if(NOT DEFINED CUDPP_INCLUDE_PATH)
+    MESSAGE(FATAL_ERROR "Please define the path for CUDPP inlcude directory in CUDPP_INCLUDE_PATH variable")
+endif(NOT DEFINED CUDPP_INCLUDE_PATH)
 
 IF(NOT EXISTS "${CUDPP_INCLUDE_PATH}" OR NOT IS_DIRECTORY "${CUDPP_INCLUDE_PATH}")
-	MESSAGE(FATAL_ERROR "Wrong path used for CUDPP_INCLUDE_PATH variable")
+    MESSAGE(FATAL_ERROR "Wrong path used for CUDPP_INCLUDE_PATH variable")
 ENDIF(NOT EXISTS "${CUDPP_INCLUDE_PATH}" OR NOT IS_DIRECTORY "${CUDPP_INCLUDE_PATH}")
 
 
-if (NOT DEFINED CUDPP_LIBRARY )
-	MESSAGE(FATAL_ERROR "Please define the path for CUDPP inlcude directory in CUDPP_LIBRARY variable")
-endif (NOT DEFINED CUDPP_LIBRARY )
+if(NOT DEFINED CUDPP_LIBRARY)
+    MESSAGE(FATAL_ERROR "Please define the path for CUDPP inlcude directory in CUDPP_LIBRARY variable")
+endif(NOT DEFINED CUDPP_LIBRARY)
 
 IF(NOT EXISTS "${CUDPP_LIBRARY}" OR IS_DIRECTORY "${CUDPP_LIBRARY}")
-	MESSAGE(FATAL_ERROR "Wrong path used for CUDPP_LIBRARY variable")
+    MESSAGE(FATAL_ERROR "Wrong path used for CUDPP_LIBRARY variable")
 ENDIF(NOT EXISTS "${CUDPP_LIBRARY}" OR IS_DIRECTORY "${CUDPP_LIBRARY}")
 
 
@@ -48,15 +48,15 @@ MESSAGE("${ZLIB_LIBRARIES}")
 MESSAGE("${PNG_LIBRARIES}")
 #link_directories(${GLUT_LIBRARY_DIRS})
 
-INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH} 
-	${GLUT_INCLUDE_PATH} 
-	${PNG_PNG_INCLUDE_DIR}
-	${CUDPP_INCLUDE_PATH})
+INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH}
+    ${GLUT_INCLUDE_PATH}
+    ${PNG_PNG_INCLUDE_DIR}
+    ${CUDPP_INCLUDE_PATH})
 #FIND_PACKAGE(CUDA QUIET REQUIRED)
 # The cuda_include_directories adds paths to only cuda compilation.
 CUDA_INCLUDE_DIRECTORIES(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 
 
@@ -65,8 +65,8 @@ CUDA_INCLUDE_DIRECTORIES(
 # automatically by CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
 
 # INCLUDE_DIRECTORIES(
- #  /home/denis/Projects/GasDSMC/include
-  # )
+#  /home/denis/Projects/GasDSMC/include
+# )
 
 ##############################################################################
 # There are four ways to compile source files with NVCC. 
@@ -81,7 +81,7 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -arch=sm_20)
 
 #enable this for realase
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O3)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O3) 
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O3)
 
 
 #set(CUDA_BUILD_EMULATION off)
@@ -90,56 +90,56 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O3)
 
 # Use one executable only.
 CUDA_ADD_EXECUTABLE(SmoldynGPU
-  smoldyn.cpp
-  sim_settings.cpp
-  draw_helper.cpp
-  data_providers.cu
-  molecules.cu
-  radixsort.cu
-  smol_kernels.cu
-  mtwister.cpp
-  model.cpp
-  matrix.cpp
-  frame3d.cpp
-  image_helper.cpp
-  genmtrand.c
-  aabb.cpp
-  vector.cpp
-  reggrid.cpp
-  radixsort.cpp
-  shader.cpp
-  smolparser.cpp
-  smol_solver.cpp
-  smolparameters.cpp
-  texture.cpp
-  log_file.cpp
-  cmd_handler.cpp
-  call_policy.cpp
-  file_path.cpp
-  cudahelp/common.cpp
-  cudahelp/random/seedgen.cpp
-  )
-  
+    smoldyn.cpp
+    sim_settings.cpp
+    draw_helper.cpp
+    data_providers.cu
+    molecules.cu
+    radixsort.cu
+    smol_kernels.cu
+    mtwister.cpp
+    model.cpp
+    matrix.cpp
+    frame3d.cpp
+    image_helper.cpp
+    genmtrand.c
+    aabb.cpp
+    vector.cpp
+    reggrid.cpp
+    radixsort.cpp
+    shader.cpp
+    smolparser.cpp
+    smol_solver.cpp
+    smolparameters.cpp
+    texture.cpp
+    log_file.cpp
+    cmd_handler.cpp
+    call_policy.cpp
+    file_path.cpp
+    cudahelp/common.cpp
+    cudahelp/random/seedgen.cpp
+)
+
 # add_library(${ZLIB_LIBRARIES} STATIC IMPORTED)
 # add_library(${PNG_LIBRARIES} STATIC IMPORTED)
-  
+
 TARGET_LINK_LIBRARIES(SmoldynGPU
-	${OPENGL_LIBRARIES}
-	${GLU_LIBRARY}
-	${GLUT_LIBRARY}
-	${GLEW_LIBRARY}
-	${ZLIB_LIBRARIES}
-	${PNG_LIBRARIES}
-	${CUDPP_LIBRARY}
-	-lGLU
-  )
+    ${OPENGL_LIBRARIES}
+    ${GLU_LIBRARY}
+    ${GLUT_LIBRARY}
+    ${GLEW_LIBRARY}
+    ${ZLIB_LIBRARIES}
+    ${PNG_LIBRARIES}
+    ${CUDPP_LIBRARY}
+    -lGLU
+)
 
 # Or compile the cuda code into a shared library.
 
 # Anything other than -D or /D is not passed along to nvcc.
 add_definitions(-DMULTIPLIER=2)
 
-file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/sprite2.png DESTINATION ${CMAKE_BINARY_DIR} )
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/sprite2.png DESTINATION ${CMAKE_BINARY_DIR})
 
 CUDA_BUILD_CLEAN_TARGET()
 

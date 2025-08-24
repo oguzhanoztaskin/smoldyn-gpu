@@ -8,17 +8,10 @@
 #ifndef UPDATE_STRATEGIES_H_
 #define UPDATE_STRATEGIES_H_
 
-namespace	dsmc
-{
-	struct	cmap_updater_gpu_t
-	{
+namespace dsmc {
+struct cmap_updater_gpu_t {};
 
-	};
-
-	struct	cmap_update_cpu_t
-	{
-
-	};
-}
+struct cmap_update_cpu_t {};
+}  // namespace dsmc
 
 #endif /* UPDATE_STRATEGIES_H_ */

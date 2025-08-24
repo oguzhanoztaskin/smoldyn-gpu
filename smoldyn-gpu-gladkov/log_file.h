@@ -10,35 +10,29 @@
 
 #include <ostream>
 
-namespace	smolgpu
-{
-	class	LogFile
-	{
-	public:
-		static	void	create(std::ostream&);
-		static	LogFile&	get();
-		static	void	destroy();
-		static	void	flush()
-		{
-			get().flush_stream();
-		}
+namespace smolgpu {
+class LogFile {
+ public:
+  static void create(std::ostream&);
+  static LogFile& get();
+  static void destroy();
+  static void flush() { get().flush_stream(); }
 
-		template	<class	T>
-		LogFile&	operator<<(const T& v)
-		{
-			out<<v;
-			return *this;
-		}
+  template <class T>
+  LogFile& operator<<(const T& v) {
+    out << v;
+    return *this;
+  }
 
-		std::ostream&	get_stream() { return out; }
-		void	flush_stream() { out.flush(); }
+  std::ostream& get_stream() { return out; }
+  void flush_stream() { out.flush(); }
 
-	private:
-		static	LogFile*	m_instance;
-		std::ostream&	out;
-		LogFile(std::ostream& ot):out(ot) {}
-		~LogFile() {}
-	};
-}
+ private:
+  static LogFile* m_instance;
+  std::ostream& out;
+  LogFile(std::ostream& ot) : out(ot) {}
+  ~LogFile() {}
+};
+}  // namespace smolgpu
 
 #endif /* LOG_FILE_H_ */

@@ -10,15 +10,13 @@
 
 #include "config.h"
 
-namespace	dsmc
-{
-	struct	statistics_t
-	{
-		float	numInSample;
-		float3	xyzSum;
-		float	velMag;
-		float2	padd;
-	};
-}
+namespace dsmc {
+struct statistics_t {
+  float numInSample;
+  float3 xyzSum;
+  float velMag;
+  float2 padd;
+};
+}  // namespace dsmc
 
 #endif /* STATISTICS_H_ */

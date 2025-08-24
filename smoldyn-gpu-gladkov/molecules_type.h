@@ -8,15 +8,13 @@
 #ifndef MOLECULES_TYPE_H_
 #define MOLECULES_TYPE_H_
 
-namespace	smolgpu
-{
-	const	int	DeadParticleId = -1;
+namespace smolgpu {
+const int DeadParticleId = -1;
 
-	struct	molecule_t
-	{
-		float3	pos;
-		int		type;
-	};
-}
+struct molecule_t {
+  float3 pos;
+  int type;
+};
+}  // namespace smolgpu
 
 #endif /* MOLECULES_TYPE_H_ */

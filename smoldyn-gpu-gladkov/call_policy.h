@@ -8,26 +8,23 @@
 #ifndef CALL_POLICY_H_
 #define CALL_POLICY_H_
 
+#include <sstream>
 #include <string>
 
 #include "log_file.h"
 
-#include <sstream>
+namespace smolgpu {
 
-namespace	smolgpu
-{
+class smolparams_t;
 
-class	smolparams_t;
-
-class	call_policy
-{
-public:
-	virtual bool	canCall(float time, int iteration) = 0;
-	virtual void	dump(std::ostream& ) {}
+class call_policy {
+ public:
+  virtual bool canCall(float time, int iteration) = 0;
+  virtual void dump(std::ostream&) {}
 };
 
-call_policy*	CreateCallPolicy(std::istringstream& ss, const smolparams_t& p);
+call_policy* CreateCallPolicy(std::istringstream& ss, const smolparams_t& p);
 
-}
+}  // namespace smolgpu
 
 #endif /* CALL_POLICY_H_ */

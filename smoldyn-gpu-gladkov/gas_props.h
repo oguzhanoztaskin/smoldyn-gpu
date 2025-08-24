@@ -10,16 +10,14 @@
 
 #include "dsmc.h"
 
-namespace	dsmc
-{
-	struct	gas_props_t
-	{
-		float	molmass;
-		float	diameter;
-		float	Tref;
+namespace dsmc {
+struct gas_props_t {
+  float molmass;
+  float diameter;
+  float Tref;
 
-		gas_props_t(): molmass(DSMC_MOL_MASS), diameter(DSMC_DIAM), Tref(DSMC_T0) {}
-	};
-}
+  gas_props_t() : molmass(DSMC_MOL_MASS), diameter(DSMC_DIAM), Tref(DSMC_T0) {}
+};
+}  // namespace dsmc
 
 #endif /* GAS_PROPS_H_ */

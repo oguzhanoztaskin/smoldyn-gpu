@@ -5,62 +5,57 @@
  *      Author: denis
  */
 
-#include "draw_helper.h"
-
 #include <GL/glew.h>
 
-namespace	dsmc
-{
+#include "draw_helper.h"
 
-template	<class	DataProvider>
-void	ColorMap<DataProvider>::Render(uint x, uint y, uint w, uint h)
-{
-	glBindTexture(GL_TEXTURE_2D,texId);
+namespace dsmc {
 
-	glColor3f(1,1,1);
+template <class DataProvider>
+void ColorMap<DataProvider>::Render(uint x, uint y, uint w, uint h) {
+  glBindTexture(GL_TEXTURE_2D, texId);
 
-	m_dataProvider.lock_data(m_width, m_height);
+  glColor3f(1, 1, 1);
 
-	glBegin(GL_QUADS);
+  m_dataProvider.lock_data(m_width, m_height);
 
-		glTexCoord2f(0,0);
-		glVertex2i(x,y);
+  glBegin(GL_QUADS);
 
-		glTexCoord2f(0,1);
-		glVertex2i(x,y+h);
+  glTexCoord2f(0, 0);
+  glVertex2i(x, y);
 
-		glTexCoord2f(1,1);
-		glVertex2i(x+w, y+h);
+  glTexCoord2f(0, 1);
+  glVertex2i(x, y + h);
 
-		glTexCoord2f(1,0);
-		glVertex2i(x+w, y);
+  glTexCoord2f(1, 1);
+  glVertex2i(x + w, y + h);
 
-	glEnd();
+  glTexCoord2f(1, 0);
+  glVertex2i(x + w, y);
 
-	m_dataProvider.unlock_data();
+  glEnd();
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+  m_dataProvider.unlock_data();
 
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-template	<class	DataProvider>
-void	ColorMap<DataProvider>::Deinit()
-{
-	m_dataProvider.deinit();
+template <class DataProvider>
+void ColorMap<DataProvider>::Deinit() {
+  m_dataProvider.deinit();
 }
 
-template	<class	DataProvider>
-void	ColorMap<DataProvider>::Init(uint width, uint height)
-{
-	m_width = width;
-	m_height = height;
+template <class DataProvider>
+void ColorMap<DataProvider>::Init(uint width, uint height) {
+  m_width = width;
+  m_height = height;
 
-	texId = CreateTexture(m_width, m_height);
-	m_dataProvider.init(m_width, m_height);
+  texId = CreateTexture(m_width, m_height);
+  m_dataProvider.init(m_width, m_height);
 }
 
 /*
-		DataProvider	m_dataProvider;
-		uint	texId;
+                DataProvider	m_dataProvider;
+                uint	texId;
 */
-}
+}  // namespace dsmc

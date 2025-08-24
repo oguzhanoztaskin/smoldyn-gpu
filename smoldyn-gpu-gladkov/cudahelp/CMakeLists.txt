@@ -11,9 +11,9 @@ FIND_PACKAGE(CUDA 3.0)
 
 # The cuda_include_directories adds paths to only cuda compilation.
 CUDA_INCLUDE_DIRECTORIES(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  /home/denis/Projects/include
-  )
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    /home/denis/Projects/include
+)
 
 
 
@@ -22,8 +22,8 @@ CUDA_INCLUDE_DIRECTORIES(
 # automatically by CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
 
 # INCLUDE_DIRECTORIES(
- #  /home/denis/Projects/GasDSMC/include
-  # )
+#  /home/denis/Projects/GasDSMC/include
+# )
 
 ##############################################################################
 # There are four ways to compile source files with NVCC. 
@@ -39,16 +39,16 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -O3)
 
 set(CUDA_BUILD_EMULATION off)
 
-LINK_DIRECTORIES( ${LINK_DIRECTORIES} ./cudpp/ )
+LINK_DIRECTORIES(${LINK_DIRECTORIES} ./cudpp/)
 
 # Use one executable only.
 CUDA_ADD_EXECUTABLE(exp
-  main.cpp
-  devmanager.cpp
-  benchmark.cpp
-  )
+    main.cpp
+    devmanager.cpp
+    benchmark.cpp
+)
 TARGET_LINK_LIBRARIES(exp
-  )
+)
 
 # Or compile the cuda code into a shared library.
 

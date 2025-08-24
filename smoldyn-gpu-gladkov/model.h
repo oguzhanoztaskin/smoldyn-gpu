@@ -1,160 +1,133 @@
 /*
  *  model.h
- *  
+ *
  *
  *  Created by Denis Gladkov on 1/28/10.
  *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
 
-#ifndef	MODEL_H
+#ifndef MODEL_H
 #define MODEL_H
 
+#include <string>
 #include <vector>
 
-#include <string>
-
+#include "aabb.h"
 #include "config.h"
-
+#include "frame3d.h"
+#include "reggrid.h"
 #include "vector.h"
 
-#include "aabb.h"
-
-#include "reggrid.h"
-
-#include "frame3d.h"
-
 /*
- * store vertices, texcoords, normals etc in separate arrays for all subsets flat
- * store 2 sets of indices:
+ * store vertices, texcoords, normals etc in separate arrays for all subsets
+ * flat store 2 sets of indices:
  * 1. subsurface indices
  * 2. grid structure
  */
 
-//#define	MODEL_NO_GRAPHICS
+// #define	MODEL_NO_GRAPHICS
 
-enum	SurfaceType
-{
-	Reflect = 0,
-	Absorb = 1,
-	AbsorbProb = 2,
-	Transparent = 3
-};
+enum SurfaceType { Reflect = 0, Absorb = 1, AbsorbProb = 2, Transparent = 3 };
 
-class Model
-{
-public:
-	Model();
-	~Model();
-	
-	struct	surface_t;
+class Model {
+ public:
+  Model();
+  ~Model();
 
-	bool	Load(const char*, bool calcNormals);
-//TODO: use collada???
-	bool	LoadRaw(const char*, bool createBuffers = true);
-	bool	SaveRaw(const char*);
+  struct surface_t;
 
-	const	std::vector<Model::surface_t>&	GetSurfaces()
-	{
-		return	surfaces;
-	}
+  bool Load(const char*, bool calcNormals);
+  // TODO: use collada???
+  bool LoadRaw(const char*, bool createBuffers = true);
+  bool SaveRaw(const char*);
 
-	bbox_t	GetBBox()
-	{
-		return bbox;
-	}
+  const std::vector<Model::surface_t>& GetSurfaces() { return surfaces; }
 
-	void	SetName(const std::string& s)
-	{
-		name = s;
-	}
+  bbox_t GetBBox() { return bbox; }
 
-	const	std::string&	GetName() const
-	{
-		return name;
-	}
+  void SetName(const std::string& s) { name = s; }
 
-	void	SetPosition(const vec3_t& v) { frame.SetPosition(v); }
-	void	SetRotation(const vec3_t& v) { frame.SetRotation(v); }
-	void	SetScale(const vec3_t& v) 	 { frame.SetScale(v); }
+  const std::string& GetName() const { return name; }
 
-	void	SetType(uint t) { type = t; }
-	uint	GetType() { return type; }
+  void SetPosition(const vec3_t& v) { frame.SetPosition(v); }
+  void SetRotation(const vec3_t& v) { frame.SetRotation(v); }
+  void SetScale(const vec3_t& v) { frame.SetScale(v); }
 
-	float	GetProbablility() { return prob; }
-	void	SetProbablility(float f) { prob = f; }
+  void SetType(uint t) { type = t; }
+  uint GetType() { return type; }
 
-	Frame3D&	GetFrame()	{return frame; }
+  float GetProbablility() { return prob; }
+  void SetProbablility(float f) { prob = f; }
 
-	void	SetFrame(const Frame3D& f) { frame = f; }
+  Frame3D& GetFrame() { return frame; }
 
-	void	Render(bool normals);
-	void	RenderGrid();
-	void	Reset();
+  void SetFrame(const Frame3D& f) { frame = f; }
 
-	void	RenderTestGrid();
-	void	RenderTestGrid(uint);
-	void	RenderTestGrid(const vec3i_t& idx);
+  void Render(bool normals);
+  void RenderGrid();
+  void Reset();
 
-	void	TestAABB(const AABB_t& aabb);
+  void RenderTestGrid();
+  void RenderTestGrid(uint);
+  void RenderTestGrid(const vec3i_t& idx);
 
-	reg_grid_t&	GetGrid() { return grid; }
+  void TestAABB(const AABB_t& aabb);
 
-	void	MoveModel(const vec3_t&	translate);
+  reg_grid_t& GetGrid() { return grid; }
 
-	void	CreateGrid(const vec3i_t&	dim);
+  void MoveModel(const vec3_t& translate);
 
-	void	CreateBuffers();
+  void CreateGrid(const vec3i_t& dim);
 
-	struct	surface_t
-	{
-		unsigned int				vertBuffer;
-		unsigned int				indexBuffer;
-		unsigned int				texCoordBuffer;
-		unsigned int				normalsBuffer;
-		unsigned int				colorsBuffer;
+  void CreateBuffers();
 
-		bbox_t						bbox;
+  struct surface_t {
+    unsigned int vertBuffer;
+    unsigned int indexBuffer;
+    unsigned int texCoordBuffer;
+    unsigned int normalsBuffer;
+    unsigned int colorsBuffer;
 
-		std::vector<uint> 			indices;
-		std::vector<vec3_t>			vertices;
-		std::vector<vec3_t>			colors;
-		std::vector<vec3_t>			normals;
-		std::vector<vec3_t>			facesNorm;
-		std::vector<vec2_t>			texCoords;
+    bbox_t bbox;
 
-		std::string					name;
+    std::vector<uint> indices;
+    std::vector<vec3_t> vertices;
+    std::vector<vec3_t> colors;
+    std::vector<vec3_t> normals;
+    std::vector<vec3_t> facesNorm;
+    std::vector<vec2_t> texCoords;
 
-		surface_t();
-		~surface_t();
+    std::string name;
 
-		void	Render();
-		void	RenderNormals();
-		void	Reset();
-		void	CalcNormals();
-		void	CreateBuffers();
-		void	CalcBBox();
+    surface_t();
+    ~surface_t();
 
-		void	CalcFacesNormals();
+    void Render();
+    void RenderNormals();
+    void Reset();
+    void CalcNormals();
+    void CreateBuffers();
+    void CalcBBox();
 
-		static	Model::surface_t	merge(const	std::vector<surface_t>& surfaces, const std::string& name);
-		static	bbox_t				merge_bbox(const	std::vector<surface_t>& surfaces);
-	};
+    void CalcFacesNormals();
 
-private:
+    static Model::surface_t merge(const std::vector<surface_t>& surfaces,
+                                  const std::string& name);
+    static bbox_t merge_bbox(const std::vector<surface_t>& surfaces);
+  };
 
-	reg_grid_t						grid;
-	std::vector<surface_t>			surfaces;
-	bbox_t							bbox;
+ private:
+  reg_grid_t grid;
+  std::vector<surface_t> surfaces;
+  bbox_t bbox;
 
-	std::string	name;
+  std::string name;
 
-	int		type;
-	float	prob;
+  int type;
+  float prob;
 
-	Frame3D	frame;
-
+  Frame3D frame;
 };
 
 #endif
-

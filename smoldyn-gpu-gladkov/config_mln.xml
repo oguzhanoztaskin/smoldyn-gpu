@@ -1,23 +1,23 @@
 <config>
 
-<grid>
-	<min>-10 -10 -10</min>
-	<max>10 10 10</max>
-	<dim>32 32 32</dim>
-</grid>
-<!--1.35-->
-<density>1.35e19</density>
-<fnum>1.0e17</fnum>
-<temp>300</temp>
-<streamvel>1000 0 0</streamvel>
-<periodic>x</periodic>
+    <grid>
+        <min>-10 -10 -10</min>
+        <max>10 10 10</max>
+        <dim>32 32 32</dim>
+    </grid>
+    <!--1.35-->
+    <density>1.35e19</density>
+    <fnum>1.0e17</fnum>
+    <temp>300</temp>
+    <streamvel>1000 0 0</streamvel>
+    <periodic>x</periodic>
 
-<model>ares2.raw</model>
+    <model>ares2.raw</model>
 
-<concentration>concmap.png</concentration>
-<velfield>velfield.png</velfield>
-<statistics csv = "false">statistics.txt</statistics>
+    <concentration>concmap.png</concentration>
+    <velfield>velfield.png</velfield>
+    <statistics csv="false">statistics.txt</statistics>
 
-<gas file ="gases.xml">default</gas>
+    <gas file="gases.xml">default</gas>
 
 </config>

@@ -5,371 +5,358 @@
  *      Author: denis
  */
 
-#include "dsmc_kernel.cuh"
-
-#include <stdexcept>
-
-#include "dsmc.h"
-#include "MersenneTwister.h"
-
 #include <cuda_gl_interop.h>
 
 #include <iostream>
+#include <stdexcept>
 
-namespace	dsmc
-{
+#include "MersenneTwister.h"
+#include "dsmc.h"
+#include "dsmc_kernel.cuh"
 
-template	<class	DataStrategy>
-GPUDSMCSolver<DataStrategy>::GPUDSMCSolver(): gridHashes(0), cellGridIndices(0), cellStartEnd(0), geomHashes(0)
-{
+namespace dsmc {
 
+template <class DataStrategy>
+GPUDSMCSolver<DataStrategy>::GPUDSMCSolver()
+    : gridHashes(0), cellGridIndices(0), cellStartEnd(0), geomHashes(0) {}
+
+template <class DataStrategy>
+GPUDSMCSolver<DataStrategy>::~GPUDSMCSolver() {
+  if (gridHashes) cudaFree(gridHashes);
+
+  if (cellGridIndices) cudaFree(cellGridIndices);
+
+  if (cellStartEnd) cudaFree(cellStartEnd);
+
+  if (geomHashes) cudaFree(geomHashes);
+
+  if (concentration) cudaFree(concentration);
+
+  if (!m_settings.benchmark) {
+    cudaGLUnregisterBufferObject(vectorFieldBuffer);
+    glDeleteBuffers(1, &vectorFieldBuffer);
+    colorMap.Deinit();
+  }
+
+  DeinitRegularGrid();
+  DeleteBirdData();
 }
 
-template	<class	DataStrategy>
-GPUDSMCSolver<DataStrategy>::~GPUDSMCSolver()
-{
-	if(gridHashes)
-		cudaFree(gridHashes);
+template <class DataStrategy>
+uint GPUDSMCSolver<DataStrategy>::InitSystemState(const float3& streamVel) {
+  float4* pos = particles.lock_positions();
+  float3* cols = particles.lock_colors();
 
-	if(cellGridIndices)
-		cudaFree(cellGridIndices);
+  if (m_settings.geometry) {
+    m_settings.numParticles = GenerateInitialVelocities(
+        pos, particles.velocities, cols, streamVel, m_settings.partPerCell,
+        m_settings.numParticles, geomHashes, m_settings.mt);
+    IntegrateAndProcessCollisions(
+        pos, particles.velocities, cols, 0, geomHashes, m_settings.numParticles,
+        !m_settings.benchmark, m_settings.periodicCondition);
+  } else {
+    GenInitialVelsUniform(pos, particles.velocities, cols, streamVel,
+                          m_settings.partPerCell, m_settings.numParticles,
+                          m_settings.mt);
+    Integrate(pos, particles.velocities, cols, 0, m_settings.numParticles,
+              !m_settings.benchmark, m_settings.periodicCondition);
+  }
 
-	if(cellStartEnd)
-		cudaFree(cellStartEnd);
+  particles.unlock_positions();
+  particles.unlock_colors();
 
-	if(geomHashes)
-		cudaFree(geomHashes);
-
-	if(concentration)
-		cudaFree(concentration);
-
-	if(!m_settings.benchmark)
-	{
-		cudaGLUnregisterBufferObject(vectorFieldBuffer);
-		glDeleteBuffers(1, &vectorFieldBuffer);
-		colorMap.Deinit();
-	}
-
-	DeinitRegularGrid();
-	DeleteBirdData();
+  return m_settings.numParticles;
 }
 
-template	<class	DataStrategy>
-uint	GPUDSMCSolver<DataStrategy>::InitSystemState(const float3& streamVel)
-{
-	float4*	pos = particles.lock_positions();
-	float3*	cols = particles.lock_colors();
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::UpdateSortedGrid(float4* pos) {
+  CalculateCellIDs(pos, gridHashes, cellGridIndices, m_settings.numParticles);
 
-	if(m_settings.geometry)
-	{
-		m_settings.numParticles = GenerateInitialVelocities(pos, particles.velocities, cols, streamVel, m_settings.partPerCell,
-																m_settings.numParticles,geomHashes, m_settings.mt);
-		IntegrateAndProcessCollisions(pos, particles.velocities, cols, 0, geomHashes, m_settings.numParticles, !m_settings.benchmark,m_settings.periodicCondition);
-	}
-	else
-	{
-		GenInitialVelsUniform(pos, particles.velocities, cols, streamVel, m_settings.partPerCell, m_settings.numParticles, m_settings.mt);
-		Integrate(pos, particles.velocities, cols, 0, m_settings.numParticles, !m_settings.benchmark,m_settings.periodicCondition);
-	}
+  if (!checkCUDAError("CalculateGridHashes"))
+    throw std::runtime_error("CUDA error");
 
-	particles.unlock_positions();
-	particles.unlock_colors();
+  SortParticlesIndices(gridHashes, cellGridIndices, m_settings.numParticles);
 
-	return	m_settings.numParticles;
+  cudaMemset(cellStartEnd, 0, m_settings.getCellsCount() * sizeof(uint2));
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::UpdateSortedGrid(float4* pos)
-{
-	CalculateCellIDs(pos, gridHashes, cellGridIndices, m_settings.numParticles);
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::ReorderParticles(float4* pos, float4* vel,
+                                                   float3* col, float4* old_pos,
+                                                   float4* old_vel,
+                                                   float3* old_col) {
+  FindCellBoundaries(cellStartEnd,  // output: cell start index
+                     pos, vel, col,
 
-	if(!checkCUDAError("CalculateGridHashes"))
-		throw	std::runtime_error("CUDA error");
+                     gridHashes,       // input: sorted grid hashes
+                     cellGridIndices,  // input: sorted particle indices
+                     old_pos,          // input: sorted position array
+                     old_vel, old_col, m_settings.numParticles,
+                     !m_settings.benchmark);
 
-	SortParticlesIndices(gridHashes, cellGridIndices, m_settings.numParticles);
-
-	cudaMemset(cellStartEnd, 0, m_settings.getCellsCount()*sizeof(uint2));
+  if (!checkCUDAError("ReorderDataAndFindCellStart"))
+    throw std::runtime_error("CUDA error");
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::ReorderParticles(float4* pos, float4* vel, float3* col,
-						float4*	old_pos, float4* old_vel, float3* old_col)
-{
-    FindCellBoundaries(
-				cellStartEnd,      // output: cell start index
-				pos,
-				vel,
-				col,
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::RunSimulationStep(float dt) {
+  m_state->advanceSimStep();
 
-				gridHashes,		// input: sorted grid hashes
-				cellGridIndices,	// input: sorted particle indices
-				old_pos,       // input: sorted position array
-				old_vel,
-				old_col,
-				m_settings.numParticles, !m_settings.benchmark);
+#ifdef REORDER
+  particles.swap_positions();
+  particles.swap_colors();
+  particles.swap_velocities();
 
-	if(!checkCUDAError("ReorderDataAndFindCellStart"))
-		throw	std::runtime_error("CUDA error");
-}
+  float4* pos = particles.lock_positions();
+  float4* old_pos = particles.lock_old_positions();
+  float3* colors = particles.lock_colors();
+  float3* old_colors = particles.lock_old_colors();
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::RunSimulationStep(float dt)
-{
-	m_state->advanceSimStep();
+  UpdateSortedGrid(old_pos);
 
-#ifdef	REORDER
-	particles.swap_positions();
-	particles.swap_colors();
-	particles.swap_velocities();
-
-	float4* pos 		= particles.lock_positions();
-	float4* old_pos 	= particles.lock_old_positions();
-	float3*	colors 		= particles.lock_colors();
-	float3*	old_colors  = particles.lock_old_colors();
-
-	UpdateSortedGrid(old_pos);
-
-	ReorderParticles(pos, particles.velocities, colors, old_pos, particles.old_velocities, old_colors);
+  ReorderParticles(pos, particles.velocities, colors, old_pos,
+                   particles.old_velocities, old_colors);
 
 #else
-	float4* pos 		= particles.lock_positions();
-	float3*	colors 		= particles.lock_colors();
+  float4* pos = particles.lock_positions();
+  float3* colors = particles.lock_colors();
 
-	UpdateSortedGrid(pos);
+  UpdateSortedGrid(pos);
 
-	ReorderParticles(0, 0, 0, 0, 0, 0);
+  ReorderParticles(0, 0, 0, 0, 0, 0);
 
 #endif
 
-	if(!checkCUDAError("UpdateGrid"))
-		throw	std::runtime_error("CUDA error");
+  if (!checkCUDAError("UpdateGrid")) throw std::runtime_error("CUDA error");
 
-	if(m_state->drawVectorField)
-	{
-		float3*	vf = 0;
-		cudaGLMapBufferObject((void**)&vf, vectorFieldBuffer);
+  if (m_state->drawVectorField) {
+    float3* vf = 0;
+    cudaGLMapBufferObject((void**)&vf, vectorFieldBuffer);
 
-		CreateVectorField(vf, particles.velocities, cellStartEnd,cellGridIndices, m_state->slice);
+    CreateVectorField(vf, particles.velocities, cellStartEnd, cellGridIndices,
+                      m_state->slice);
 
-		cudaGLUnmapBufferObject(vectorFieldBuffer);
-	}
+    cudaGLUnmapBufferObject(vectorFieldBuffer);
+  }
 
-	if(m_state->processCollisions)
-	{
-		ComputeBird(particles.velocities,cellStartEnd,cellGridIndices,m_settings.partPerCell, m_settings.dt, m_settings.mt);
+  if (m_state->processCollisions) {
+    ComputeBird(particles.velocities, cellStartEnd, cellGridIndices,
+                m_settings.partPerCell, m_settings.dt, m_settings.mt);
 
-		if(!checkCUDAError("ComputeBird"))
-			throw	std::runtime_error("CUDA error");
-	}
+    if (!checkCUDAError("ComputeBird")) throw std::runtime_error("CUDA error");
+  }
 
-	if(m_settings.geometry)
-		IntegrateAndProcessCollisions(pos, particles.velocities, colors, dt, geomHashes, m_settings.numParticles, true,m_settings.periodicCondition);
-	else
-		Integrate(pos, particles.velocities, colors, dt, m_settings.numParticles, true,m_settings.periodicCondition);
+  if (m_settings.geometry)
+    IntegrateAndProcessCollisions(pos, particles.velocities, colors, dt,
+                                  geomHashes, m_settings.numParticles, true,
+                                  m_settings.periodicCondition);
+  else
+    Integrate(pos, particles.velocities, colors, dt, m_settings.numParticles,
+              true, m_settings.periodicCondition);
 
-	if(!checkCUDAError("IntegrateColors3D"))
-		throw	std::runtime_error("CUDA error");
+  if (!checkCUDAError("IntegrateColors3D"))
+    throw std::runtime_error("CUDA error");
 
-	//TODO: move 100 somewhere
-	if(!(m_state->stepCount%100))
-	{
-		SampleCellStatistics(particles.velocities, cellStartEnd,cellGridIndices);
-		m_state->advanceSamplesCount();
+  // TODO: move 100 somewhere
+  if (!(m_state->stepCount % 100)) {
+    SampleCellStatistics(particles.velocities, cellStartEnd, cellGridIndices);
+    m_state->advanceSamplesCount();
 
-		if(!checkCUDAError("SampleCellStatistics"))
-			throw	std::runtime_error("CUDA error");
-	}
+    if (!checkCUDAError("SampleCellStatistics"))
+      throw std::runtime_error("CUDA error");
+  }
 
-	particles.unlock_positions();
-	particles.unlock_colors();
+  particles.unlock_positions();
+  particles.unlock_colors();
 
-#ifdef	REORDER
-	particles.unlock_old_positions();
-	particles.unlock_old_colors();
+#ifdef REORDER
+  particles.unlock_old_positions();
+  particles.unlock_old_colors();
 #endif
 
-	m_state->advanceSimTime(dt);
+  m_state->advanceSimTime(dt);
 
-	if(m_state->sampleConcentration)
-	{
-		SampleConcentrationSliced(concentration, m_state->slice, cellStartEnd);
+  if (m_state->sampleConcentration) {
+    SampleConcentrationSliced(concentration, m_state->slice, cellStartEnd);
 
-		uchar4* cols11;
-		cudaGLMapBufferObject((void**)&cols11, colorMap.GetDataProvider().colorBuffer);
+    uchar4* cols11;
+    cudaGLMapBufferObject((void**)&cols11,
+                          colorMap.GetDataProvider().colorBuffer);
 
-		BuildColorField(concentration,cols11,32,32,1,1);
+    BuildColorField(concentration, cols11, 32, 32, 1, 1);
 
-		cudaGLUnmapBufferObject(colorMap.GetDataProvider().colorBuffer);
-	}
+    cudaGLUnmapBufferObject(colorMap.GetDataProvider().colorBuffer);
+  }
 }
 
-//TODO: Get rid of colors
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::RunBenchmarkSimulationStep(float dt)
-{
-	m_state->advanceSimStep();
+// TODO: Get rid of colors
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::RunBenchmarkSimulationStep(float dt) {
+  m_state->advanceSimStep();
 
-#ifdef	REORDER
-	particles.swap_positions();
-	particles.swap_colors();
-	particles.swap_velocities();
+#ifdef REORDER
+  particles.swap_positions();
+  particles.swap_colors();
+  particles.swap_velocities();
 
-	float4* pos 		= particles.lock_positions();
-	float4* old_pos 	= particles.lock_old_positions();
-	float3*	colors 		= particles.lock_colors();
-	float3*	old_colors  = particles.lock_old_colors();
+  float4* pos = particles.lock_positions();
+  float4* old_pos = particles.lock_old_positions();
+  float3* colors = particles.lock_colors();
+  float3* old_colors = particles.lock_old_colors();
 
-	UpdateSortedGrid(old_pos);
+  UpdateSortedGrid(old_pos);
 
-	ReorderParticles(pos, particles.velocities, colors, old_pos, particles.old_velocities, old_colors);
+  ReorderParticles(pos, particles.velocities, colors, old_pos,
+                   particles.old_velocities, old_colors);
 
 #else
-	float4* pos 		= particles.lock_positions();
-	float3*	colors 		= particles.lock_colors();
+  float4* pos = particles.lock_positions();
+  float3* colors = particles.lock_colors();
 
-	UpdateSortedGrid(pos);
+  UpdateSortedGrid(pos);
 
-	ReorderParticles(0, 0, 0, 0, 0, 0);
+  ReorderParticles(0, 0, 0, 0, 0, 0);
 
 #endif
 
-	if(m_state->processCollisions)
-		ComputeBird(particles.velocities,cellStartEnd,cellGridIndices,m_settings.partPerCell, m_settings.dt, m_settings.mt);
+  if (m_state->processCollisions)
+    ComputeBird(particles.velocities, cellStartEnd, cellGridIndices,
+                m_settings.partPerCell, m_settings.dt, m_settings.mt);
 
-	if(m_settings.geometry)
-		IntegrateAndProcessCollisions(pos, particles.velocities, colors, dt, geomHashes, m_settings.numParticles, false,m_settings.periodicCondition);
-	else
-		Integrate(pos, particles.velocities, colors, dt, m_settings.numParticles, false, m_settings.periodicCondition);
+  if (m_settings.geometry)
+    IntegrateAndProcessCollisions(pos, particles.velocities, colors, dt,
+                                  geomHashes, m_settings.numParticles, false,
+                                  m_settings.periodicCondition);
+  else
+    Integrate(pos, particles.velocities, colors, dt, m_settings.numParticles,
+              false, m_settings.periodicCondition);
 
-	//TODO: move 100 somewhere
-	if(!(m_state->stepCount%100))
-	{
-		SampleCellStatistics(particles.velocities, cellStartEnd,cellGridIndices);
-		m_state->advanceSamplesCount();
-	}
+  // TODO: move 100 somewhere
+  if (!(m_state->stepCount % 100)) {
+    SampleCellStatistics(particles.velocities, cellStartEnd, cellGridIndices);
+    m_state->advanceSamplesCount();
+  }
 
-	particles.unlock_positions();
-	particles.unlock_colors();
+  particles.unlock_positions();
+  particles.unlock_colors();
 
-#ifdef	REORDER
-	particles.unlock_old_positions();
-	particles.unlock_old_colors();
+#ifdef REORDER
+  particles.unlock_old_positions();
+  particles.unlock_old_colors();
 #endif
 
-
-	m_state->advanceSimTime(dt);
+  m_state->advanceSimTime(dt);
 }
 
-template	<class	DataStrategy>
-statistics_t*	GPUDSMCSolver<DataStrategy>::SampleStatistics(float4& collStat)
-{
-	collStat = GetStatistics();
+template <class DataStrategy>
+statistics_t* GPUDSMCSolver<DataStrategy>::SampleStatistics(float4& collStat) {
+  collStat = GetStatistics();
 
-	return	SampleCellStatistics(particles.velocities, cellStartEnd,cellGridIndices,true);
+  return SampleCellStatistics(particles.velocities, cellStartEnd,
+                              cellGridIndices, true);
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::InitRegularGrid(reg_grid_t& grid, const float* v, uint size)
-{
-	geomHashes = ::InitRegularGrid(grid, v, size);
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::InitRegularGrid(reg_grid_t& grid,
+                                                  const float* v, uint size) {
+  geomHashes = ::InitRegularGrid(grid, v, size);
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::RenderConcMap(uint	x, uint	y, uint	w, uint	h)
-{
-	colorMap.Render(x,y,w,h);
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::RenderConcMap(uint x, uint y, uint w,
+                                                uint h) {
+  colorMap.Render(x, y, w, h);
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::Render()
-{
-	particles.render(m_settings.numParticles);
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::Render() {
+  particles.render(m_settings.numParticles);
 }
 
-template	<class	DataStrategy>
-unsigned char*	GPUDSMCSolver<DataStrategy>::GetColorMap(uint& w, uint& h, uint&	bpp)
-{
-	uchar4* cols11;
-	cudaGLMapBufferObject((void**)&cols11, colorMap.GetDataProvider().colorBuffer);
+template <class DataStrategy>
+unsigned char* GPUDSMCSolver<DataStrategy>::GetColorMap(uint& w, uint& h,
+                                                        uint& bpp) {
+  uchar4* cols11;
+  cudaGLMapBufferObject((void**)&cols11,
+                        colorMap.GetDataProvider().colorBuffer);
 
-	unsigned	char*	data = new	unsigned char[4*32*32];
+  unsigned char* data = new unsigned char[4 * 32 * 32];
 
-	cudaMemcpy(data, cols11, 4*32*32*sizeof(unsigned char), cudaMemcpyDeviceToHost);
+  cudaMemcpy(data, cols11, 4 * 32 * 32 * sizeof(unsigned char),
+             cudaMemcpyDeviceToHost);
 
-	cudaGLUnmapBufferObject(colorMap.GetDataProvider().colorBuffer);
+  cudaGLUnmapBufferObject(colorMap.GetDataProvider().colorBuffer);
 
-	w = 32;
-	h = 32;
-	bpp = 4;
+  w = 32;
+  h = 32;
+  bpp = 4;
 
-	return data;
+  return data;
 }
 
-template	<class	DataStrategy>
-float3*		GPUDSMCSolver<DataStrategy>::GetVelocityField()
-{
-	float3*	vf = 0;
-	cudaGLMapBufferObject((void**)&vf, vectorFieldBuffer);
+template <class DataStrategy>
+float3* GPUDSMCSolver<DataStrategy>::GetVelocityField() {
+  float3* vf = 0;
+  cudaGLMapBufferObject((void**)&vf, vectorFieldBuffer);
 
-	PreProcessVectorField(vf,m_settings.boundaries.get_xsize(),m_settings.boundaries.get_ysize(),
-								m_settings.boundaries.min.x, m_settings.boundaries.min.y);
+  PreProcessVectorField(
+      vf, m_settings.boundaries.get_xsize(), m_settings.boundaries.get_ysize(),
+      m_settings.boundaries.min.x, m_settings.boundaries.min.y);
 
-	uint	size = m_settings.grid_dim.x*m_settings.grid_dim.x*2;
+  uint size = m_settings.grid_dim.x * m_settings.grid_dim.x * 2;
 
-	float3*	data = new float3[size];
+  float3* data = new float3[size];
 
-	cudaMemcpy(data, vf, size*sizeof(float3), cudaMemcpyDeviceToHost);
+  cudaMemcpy(data, vf, size * sizeof(float3), cudaMemcpyDeviceToHost);
 
-	cudaGLUnmapBufferObject(vectorFieldBuffer);
+  cudaGLUnmapBufferObject(vectorFieldBuffer);
 
-	return data;
+  return data;
 }
 
-template	<class	DataStrategy>
-void	GPUDSMCSolver<DataStrategy>::InitData()
-{
-	const char *dat_path = "data/MersenneTwister.dat";
+template <class DataStrategy>
+void GPUDSMCSolver<DataStrategy>::InitData() {
+  const char* dat_path = "data/MersenneTwister.dat";
 
-	if(m_settings.mt)
-		InitGPUTwisters(dat_path, SEED);
+  if (m_settings.mt) InitGPUTwisters(dat_path, SEED);
 
-	checkCUDAErrorAndThrow("InitGPUTwisters");
+  checkCUDAErrorAndThrow("InitGPUTwisters");
 
-	particles.init(m_settings.numParticles);
+  particles.init(m_settings.numParticles);
 
-	cudaMalloc((void **)&gridHashes, m_settings.numParticles * sizeof(uint));
-	cudaMalloc((void **)&cellGridIndices, m_settings.numParticles * sizeof(uint));
+  cudaMalloc((void**)&gridHashes, m_settings.numParticles * sizeof(uint));
+  cudaMalloc((void**)&cellGridIndices, m_settings.numParticles * sizeof(uint));
 
-	const	uint	cellsCount = m_settings.getCellsCount();
+  const uint cellsCount = m_settings.getCellsCount();
 
-	cudaMalloc((void **)&concentration, m_settings.grid_dim.x*m_settings.grid_dim.y * sizeof(float));
+  cudaMalloc((void**)&concentration,
+             m_settings.grid_dim.x * m_settings.grid_dim.y * sizeof(float));
 
-	cudaMalloc((void **)&cellStartEnd, cellsCount * sizeof(uint2));
+  cudaMalloc((void**)&cellStartEnd, cellsCount * sizeof(uint2));
 
-	InitSimulationProperties(m_settings);
+  InitSimulationProperties(m_settings);
 
-	checkCUDAErrorAndThrow("InitSimulationProperties");
+  checkCUDAErrorAndThrow("InitSimulationProperties");
 
-	InitBirdData(cellsCount, m_settings.partPerCell, m_settings.mt);
+  InitBirdData(cellsCount, m_settings.partPerCell, m_settings.mt);
 
-	checkCUDAErrorAndThrow("InitBirdData");
+  checkCUDAErrorAndThrow("InitBirdData");
 
-	if(m_settings.mt)
-		InitMersenneTwisters();
+  if (m_settings.mt) InitMersenneTwisters();
 
-	checkCUDAErrorAndThrow("InitGPUTwisters");
+  checkCUDAErrorAndThrow("InitGPUTwisters");
 
-	if(!m_settings.benchmark)
-	{
-		uint vbsz = m_settings.grid_dim.x*m_settings.grid_dim.y*2*sizeof(float3);
+  if (!m_settings.benchmark) {
+    uint vbsz =
+        m_settings.grid_dim.x * m_settings.grid_dim.y * 2 * sizeof(float3);
 
-		vectorFieldBuffer = CreateCUDABufferObject(vbsz);
+    vectorFieldBuffer = CreateCUDABufferObject(vbsz);
 
-		checkCUDAError("vectorFieldBuffer");
+    checkCUDAError("vectorFieldBuffer");
 
-		colorMap.Init(32,32);
+    colorMap.Init(32, 32);
 
-		checkCUDAErrorAndThrow("colorMap.Init(32,32)");
-	}
+    checkCUDAErrorAndThrow("colorMap.Init(32,32)");
+  }
 }
-}
+}  // namespace dsmc

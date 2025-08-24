@@ -1,61 +1,58 @@
 #ifndef SIM_SETTINGS_H
 #define SIM_SETTINGS_H
 
-#include "config.h"
-
-#include "gas_props.h"
-
-#include "aabb.h"
-
 #include <string>
 
-struct	settings_t
-{
-	bool	benchmark;
-	bool	cpu;
-	bool	geometry;
-	bool	mt;
+#include "aabb.h"
+#include "config.h"
+#include "gas_props.h"
 
-	bool	shaders;
+struct settings_t {
+  bool benchmark;
+  bool cpu;
+  bool geometry;
+  bool mt;
 
-	bool	csv;
+  bool shaders;
 
-	uint	numParticles;
-	uint	partPerCell;
+  bool csv;
 
-	float	maxRunTime;
+  uint numParticles;
+  uint partPerCell;
 
-	float	dt;
+  float maxRunTime;
 
-	dsmc::gas_props_t	gas;
+  float dt;
 
-	std::string	gas_name;
-	std::string	modelName;
-	std::string	statName;
-	std::string	concName;
-	std::string	velsName;
+  dsmc::gas_props_t gas;
 
-	float	density;
-	float	fnum;
-	float	temp;
+  std::string gas_name;
+  std::string modelName;
+  std::string statName;
+  std::string concName;
+  std::string velsName;
 
-	float	viscValue;
+  float density;
+  float fnum;
+  float temp;
 
-	vec3_t	streamVelocity;
+  float viscValue;
 
-	char	periodicCondition;
+  vec3_t streamVelocity;
 
-	bbox_t	boundaries;
-	vec3_t	cell_size;
-	vec3i_t	grid_dim;
+  char periodicCondition;
 
-	uint	getCellsCount() const { return grid_dim.x*grid_dim.y*grid_dim.z; }
+  bbox_t boundaries;
+  vec3_t cell_size;
+  vec3i_t grid_dim;
 
-	void	readFromFile(const char* filename);
-	void	readFromCmdLine(int argc, char** argv);
-	void	print();
+  uint getCellsCount() const { return grid_dim.x * grid_dim.y * grid_dim.z; }
 
-	settings_t();
+  void readFromFile(const char* filename);
+  void readFromCmdLine(int argc, char** argv);
+  void print();
+
+  settings_t();
 };
 
 #endif

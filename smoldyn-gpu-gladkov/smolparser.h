@@ -9,17 +9,15 @@
 #define SMOLPARSER_H_
 
 #include "smolparameters.h"
-namespace	smolgpu
-{
+namespace smolgpu {
 
-class	SmoldynParser
-{
-public:
-	SmoldynParser();
-	~SmoldynParser();
-	void	operator()(const char*	filename, smolparams_t& p);
+class SmoldynParser {
+ public:
+  SmoldynParser();
+  ~SmoldynParser();
+  void operator()(const char* filename, smolparams_t& p);
 };
 
-}
+}  // namespace smolgpu
 
 #endif /* SMOLPARSER_H_ */

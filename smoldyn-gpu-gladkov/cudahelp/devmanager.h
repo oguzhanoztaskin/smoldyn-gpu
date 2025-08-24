@@ -8,72 +8,64 @@
 #ifndef DEVMANAGER_H_
 #define DEVMANAGER_H_
 
-#ifdef	_MSC_VER
+#ifdef _MSC_VER
 #define BOOST_USE_WINDOWS_H
 #endif
 
-#include <boost/shared_ptr.hpp>
-
-#include <string>
-
 #include <cuda_runtime.h>
 
-namespace	cudahelp
-{
-	class	DeviceManager
-	{
-	public:
+#include <boost/shared_ptr.hpp>
+#include <string>
 
-		class	Device 
-		{
-		public:
-			Device(int	id, int total);
-			~Device();
+namespace cudahelp {
+class DeviceManager {
+ public:
+  class Device {
+   public:
+    Device(int id, int total);
+    ~Device();
 
-			boost::shared_ptr<Device>	GetNext() const;
-			bool						HasNext() const;
+    boost::shared_ptr<Device> GetNext() const;
+    bool HasNext() const;
 
-			std::string	GetName() const;
-			
-			bool	SupportMapHost() const;
-			bool	SupportOverlaps() const;
+    std::string GetName() const;
 
-			void	EnableMapHost();
+    bool SupportMapHost() const;
+    bool SupportOverlaps() const;
 
-			void	SetCurrent();
+    void EnableMapHost();
 
-			void	Print(std::ostream& out) const;
+    void SetCurrent();
 
-			const	cudaDeviceProp&	GetProps() const { return deviceProp_; }
+    void Print(std::ostream& out) const;
 
-		private:
-			int	id_;
-			int	total_;
-			cudaDeviceProp deviceProp_;
-		};
+    const cudaDeviceProp& GetProps() const { return deviceProp_; }
 
-		typedef	boost::shared_ptr<Device>	DevicePtr;
+   private:
+    int id_;
+    int total_;
+    cudaDeviceProp deviceProp_;
+  };
 
-		static	DeviceManager&	Get();
-		static	void	Destroy();
+  typedef boost::shared_ptr<Device> DevicePtr;
 
-		DevicePtr	GetFirstDevice() const;
-		DevicePtr	GetMaxGFpsDevice() const;
-		DevicePtr	GetCurrentDevice() const;
+  static DeviceManager& Get();
+  static void Destroy();
 
-		int			GetDeviceCount() const;
+  DevicePtr GetFirstDevice() const;
+  DevicePtr GetMaxGFpsDevice() const;
+  DevicePtr GetCurrentDevice() const;
 
-	private:
+  int GetDeviceCount() const;
 
-		static	DeviceManager*	instance_;
+ private:
+  static DeviceManager* instance_;
 
-		int		totalDevices_;
+  int totalDevices_;
 
-		DeviceManager();
-		~DeviceManager();
-
-	};
-}
-
+  DeviceManager();
+  ~DeviceManager();
+};
+}  // namespace cudahelp
 
 #endif /* DEVMANAGER_H_ */

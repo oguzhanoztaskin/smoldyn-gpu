@@ -7,14 +7,13 @@
 
 #include "smolparser.h"
 
-using namespace	smolgpu;
+using namespace smolgpu;
 
-int main11(int argc, char **argv)
-{
-	smolparams_t	params;
+int main11(int argc, char **argv) {
+  smolparams_t params;
 
-	SmoldynParser	parser;
-	parser(argv[1], params);
+  SmoldynParser parser;
+  parser(argv[1], params);
 
-	return 0;
+  return 0;
 }

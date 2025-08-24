@@ -1,20 +1,14 @@
-#ifndef	UTILS_H
+#ifndef UTILS_H
 #define UTILS_H
-
-#include <string>
 
 #include <stdlib.h>
 
-inline int		int_rand()
-{
-	return rand()%10000 + 1;
-}
+#include <string>
 
-void	generate_random(int*	data, int size);
+inline int int_rand() { return rand() % 10000 + 1; }
 
-inline	std::string	bool2str(bool b)
-{
-	return (b)?"yes":"no";
-}
+void generate_random(int* data, int size);
+
+inline std::string bool2str(bool b) { return (b) ? "yes" : "no"; }
 
 #endif

@@ -1,35 +1,32 @@
 /*
  *  config.h
- *  
+ *
  *
  *  Created by Denis Gladkov on 2/9/10.
  *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
 
-#ifndef	CONFIG_H
+#ifndef CONFIG_H
 #define CONFIG_H
 /*
 #include <vector_types.h>
 #include <vector_functions.h>
 */
-typedef	unsigned int	uint;
-typedef unsigned char	byte;
+typedef unsigned int uint;
+typedef unsigned char byte;
 
-//#define USE_TEX
+// #define USE_TEX
 #define GPU_TEST
 #define USE_GRAPHICS
 
-inline	uint	GetNumberOfBlocks(uint threads, uint numParticles)
-{
-	uint	numBlocks = numParticles/threads;
+inline uint GetNumberOfBlocks(uint threads, uint numParticles) {
+  uint numBlocks = numParticles / threads;
 
-	if(numParticles%threads)
-		numBlocks++;
+  if (numParticles % threads) numBlocks++;
 
-	return numBlocks;
+  return numBlocks;
 }
-
 
 #ifdef __CDT_PARSER__
 #define __host__

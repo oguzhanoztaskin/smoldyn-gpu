@@ -10,26 +10,24 @@
 
 #include <string>
 
-namespace	smolgpu
-{
-	class	FilesPath
-	{
-	public:
+namespace smolgpu {
+class FilesPath {
+ public:
+  static void create(const std::string& path = "",
+                     const std::string& prefix = "");
+  static FilesPath& get();
 
-		static void	create(const std::string& path = "", const std::string& prefix = "");
-		static FilesPath&	get();
+  std::string getFilePath(const std::string& filename);
 
-		std::string	getFilePath(const std::string& filename);
+ private:
+  static FilesPath* m_instance;
 
-	private:
-		static	FilesPath*	m_instance;
+  std::string path;
+  std::string prefix;
 
-		std::string path;
-		std::string prefix;
-
-		FilesPath(const std::string& path, const std::string& prefix);
-		~FilesPath();
-	};
-}
+  FilesPath(const std::string& path, const std::string& prefix);
+  ~FilesPath();
+};
+}  // namespace smolgpu
 
 #endif /* FILE_PATH_H_ */
