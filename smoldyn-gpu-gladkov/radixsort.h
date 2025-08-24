@@ -28,6 +28,8 @@
 //
 // -----------------------------------------------------------------------
 
+#include <iostream>
+
 #include "cuda_runtime_api.h"
 
 namespace nvRadixSort {
@@ -61,31 +63,6 @@ class RadixSort {
     //   radixSort(keys, values, mTempKeys, mTempValues, mCounters,
     //   mCountersSum,
     //             mBlockOffsets, mScanPlan, numElements, keyBits, false);
-    // }
-  }
-
-  //------------------------------------------------------------------------
-  // Sorts input arrays of float keys and (optional) unsigned integer values
-  //
-  // @param keys         Array of keys for data to be sorted
-  // @param values       Array of values to be sorted
-  // @param numElements  Number of elements to be sorted.  Must be <=
-  //                     maxElements passed to the constructor
-  // @param keyBits      The number of bits in each key to use for ordering
-  // @param negativeKeys False if unsigned float keys, true if signed
-  //------------------------------------------------------------------------
-  void sort(float *keys, unsigned int *values, unsigned int numElements,
-            unsigned int keyBits, bool negativeKeys) {
-    // TODO: implement
-    // if (values == 0) {
-    //   radixSortFloatKeysOnly(keys, (float *)mTempKeys, mCounters,
-    //   mCountersSum,
-    //                          mBlockOffsets, mScanPlan, numElements, keyBits,
-    //                          negativeKeys);
-    // } else {
-    //   radixSortFloatKeys(keys, values, (float *)mTempKeys, mTempValues,
-    //                      mCounters, mCountersSum, mBlockOffsets, mScanPlan,
-    //                      numElements, keyBits, negativeKeys);
     // }
   }
 
